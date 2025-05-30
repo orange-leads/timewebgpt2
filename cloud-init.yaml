@@ -1,22 +1,36 @@
 #cloud-config
 ssh_authorized_keys:
-  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCp5… your_email@example.com
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCp5v4ErPCmREYm+mAdHv9hiKyomXlGeJWcGGTXoCuh8EXMQmSXL7eZ8CPyK4dIu8+kZ0epUIfInZMIaGa0YszwEt4KpMN3RsXkZUQYB9eEGUz5EBo5SZKhLoXDfzvfY9D4AR7SnX3SbplxAmDD9AdDmK1h3WpONUvc/hnLbwQxUElwkmvcR9qSYENjGkJnM7yZjGKGXQKdDd6CFPzRrehJE9xXyEJ0AmBSU8HxfeqksjwI2PXFqmH5FLa3tHBKcxEJcIA8T90RA+NRS/PUpC2dXoEHcApUEGjwEZxIrhBlrLa9ETTNT/EL7Rg8KaWgnnyiUl4jxvEfG2fUSZ4SVczAtNh8cRsblZjN2OMOZwT+x78u2WuD57bC+tsSXTsLssW08LRSumkv2P4E4l2nYetnESALi4nP6QNaYzJQwgHcYeIG6eXjOEXhlifsO9fE/stzBmk3N28ExlWtLwJ3ckFsJVzIh3lIAA59vKNl9RDG3p/DBED9eW5UvCpv4gfPqpBncJ3iLBu2mt7gC/5X2KDUtkNOoFGxuJyEzvF1u6z0Dmc6FPG5f0VbRAwlWzlOtPDUvqov6YxjKpdmcIUofCnkILKDxoGrjajDMhbyJe28mV29txJy1grtMflhOhdAwWWLqzVU8/FcYo1FydFpECJjXUsKAQbtRv+/jEjCARWiKQ== murad@MacBook-Air
 
 packages:
   - docker.io
   - docker-compose
 
 runcmd:
+  # Устанавливаем и запускаем Docker
   - systemctl enable docker
   - systemctl start docker
+
+  # Готовим директорию для деплоя
   - mkdir -p /root/deploy
   - cd /root/deploy
+
+  # Клонируем ваш репозиторий
   - git clone git@github.com:orange-leads/timewebgpt2.git .
-  - cp env_template.env .env.prod
-  - # Edit .env.prod manually with real values
-  - cp .env.prod .env
+
+  # Создаем файл окружения
+  - cp env_template.env .env
+  # → После первого старта вручную заполните /root/deploy/.env реальными значениями
+
+  # Подтягиваем и стартуем контейнеры
   - docker-compose pull
   - docker-compose up -d
+
+  # Ждем инициализации сервисов
   - sleep 30
+
+  # Импортируем флоу n8n
   - docker exec n8n_astreya n8n import:workflow --input /root/deploy/n8n_workflows.json
-  - unzip nocodb_project.zip -d /root/deploy/nocodb_import
+
+  # Распаковываем проект NocoDB (далее импорт через UI)
+  - unzip /root/deploy/nocodb_project.zip -d /root/deploy/nocodb_import
