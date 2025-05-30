@@ -1,8 +1,10 @@
-postgres:14
+postgres:14.21
 vault:1.12.0
 confluentinc/cp-zookeeper:7.4.0
 confluentinc/cp-kafka:7.4.0
-bitrixvm:latest
-nocodb/nocodb:latest
-n8nio/n8n:1.94.1
-alpine:latest
+bitrixvm:24.0-php8.2
+nocodb/nocodb:0.258.0
+n8nio/n8n:1.95.0
+alpine:3.18
+docker:24.0.5
+docker-compose:2.20.2

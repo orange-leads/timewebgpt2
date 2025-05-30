@@ -1,28 +1,32 @@
 # Спецификация приложения для Яндекс.Директ API
 
 ## 1. Архитектура приложения
-Приложение развёрнуто с использованием Docker:
-- **Postgres**: хранение основных данных (leads, campaigns, content_items и т.д.)
-- **NocoDB**: low-code UI для управления данными
-- **n8n**: автоматизация потоков данных
-- **Bitrix**: фронтенд сайта на основе 1C-Битрикс
-- **GPT-модуль**: генерация рекламного контента и UTM-меток
-- **Yandex.Direct API**: управление рекламными кампаниями через Direct API
+Docker stack: PostgreSQL, Vault, ZooKeeper, Kafka, Bitrix, NocoDB, n8n.
 
-## 2. Основные REST-эндпойнты Direct API
-```
-GET    /json/v5/campaigns    - получение списка кампаний
-POST   /json/v5/campaigns    - создание или изменение кампаний
-GET    /json/v5/ads          - получение списка объявлений
-POST   /json/v5/ads         - создание объявлений
-POST   /json/v5/bids        - установка ставок
+## 2. Примеры REST-запросов
+
+### GET Campaigns
+```http
+GET https://api.direct.yandex.com/json/v5/campaigns
+Authorization: Bearer <token>
+Content-Type: application/json
 ```
 
-## 3. Порядок работы
-1. NocoDB формирует запрос и передаёт его в GPT-модуль через n8n-флоу.  
-2. GPT-модель генерирует рекламные тексты и формирует UTM-метки.  
-3. n8n отправляет сгенерированный контент в Yandex.Direct API.  
-4. Полученная статистика (impressions, clicks, CTR) запрашивается через Direct API и сохраняется в БД.  
-5. Анализ данных и автоматическое корректирование ставок через Direct API.
+### POST Ad
+```http
+POST https://api.direct.yandex.com/json/v5/ads
+Authorization: Bearer <token>
+Content-Type: application/json
 
-*Сгенерировано для заявки на доступ к API Яндекс.Директа.*
+{
+  "method": "add",
+  "params": { ... }
+}
+```
+
+## 3. БД ER-схема
+```
+leads (UUID) ← campaigns (serial) ← content_items (UUID)
+```
+
+*…другие разделы…*

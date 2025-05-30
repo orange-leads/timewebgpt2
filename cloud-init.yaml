@@ -1,0 +1,22 @@
+#cloud-config
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCp5… your_email@example.com
+
+packages:
+  - docker.io
+  - docker-compose
+
+runcmd:
+  - systemctl enable docker
+  - systemctl start docker
+  - mkdir -p /root/deploy
+  - cd /root/deploy
+  - git clone git@github.com:orange-leads/timewebgpt2.git .
+  - cp env_template.env .env.prod
+  - # Edit .env.prod manually with real values
+  - cp .env.prod .env
+  - docker-compose pull
+  - docker-compose up -d
+  - sleep 30
+  - docker exec n8n_astreya n8n import:workflow --input /root/deploy/n8n_workflows.json
+  - unzip nocodb_project.zip -d /root/deploy/nocodb_import

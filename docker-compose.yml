@@ -1,9 +1,8 @@
 version: '3.8'
 services:
   db:
-    image: postgres:14
+    image: postgres:14.21
     container_name: pg_astreya
-    restart: always
     env_file:
       - .env
     volumes:
@@ -12,50 +11,38 @@ services:
       - "5432:5432"
     networks:
       - internal
-
   vault:
     image: vault:1.12.0
     container_name: vault
-    restart: always
-    command: server -dev -dev-root-token-id=root
     env_file:
       - .env
+    volumes:
+      - vault_data:/vault/file
     ports:
       - "8200:8200"
+    command: server
     networks:
       - internal
-
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     container_name: zk_astreya
-    restart: always
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
     ports:
       - "2181:2181"
     networks:
       - internal
-
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: kafka_astreya
-    restart: always
     depends_on:
-      - zookeeper
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      zookeeper:
+        condition: service_healthy
     ports:
       - "9092:9092"
     networks:
       - internal
-
   bitrix:
-    image: bitrixvm:latest
+    image: bitrixvm:24.0-php8.2
     container_name: bitrix_astreya
-    restart: always
     env_file:
       - .env
     volumes:
@@ -64,42 +51,39 @@ services:
       - "8080:80"
     networks:
       - internal
-
   nocodb:
-    image: nocodb/nocodb:latest
+    image: nocodb/nocodb:0.258.0
     container_name: nocodb_astreya
-    restart: always
     env_file:
       - .env
     ports:
       - "8081:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - internal
-
   n8n:
-    image: n8nio/n8n:1.94.1
+    image: n8nio/n8n:1.95.0
     container_name: n8n_astreya
-    restart: always
     env_file:
       - .env
     ports:
       - "5678:5678"
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - internal
-
   unzipper:
-    image: alpine:latest
+    image: alpine:3.18
     container_name: unzipper
-    restart: 'no'
     entrypoint: ["sleep", "infinity"]
     volumes:
       - ./archives:/archives
       - ./extracted:/extracted
-
 networks:
   internal:
-
 volumes:
   pg_data:
+  vault_data:
